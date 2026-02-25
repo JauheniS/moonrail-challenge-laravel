@@ -1,10 +1,5 @@
 <?php
 
-// /////////////////////////////////////////////////////////////////////////////
-// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW.
-// YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
-// /////////////////////////////////////////////////////////////////////////////
-
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Http\Request;
@@ -23,3 +18,4 @@ Route::prefix('player')->group(function () {
 });
 
 Route::post('team/process', [TeamController::class, 'process']);
+

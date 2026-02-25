@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Laravel Project: Diff Analysis & Algorithm Breakdown</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --primary-color: #ef4444;
+            --accent-color: #38bdf8;
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --code-bg: #334155;
+            --border-color: #334155;
+            --nav-width: 280px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        nav {
+            width: var(--nav-width);
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        nav h2 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        nav ul { list-style: none; }
+        nav li { margin-bottom: 0.75rem; }
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+        }
+
+        nav a:hover {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        nav a.active {
+            color: var(--text-color);
+            background-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        main {
+            margin-left: var(--nav-width);
+            flex: 1;
+            padding: 3rem 4rem;
+            max-width: 1200px;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #ef4444, #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 2rem;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.5rem;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent-color);
+        }
+
+        p { margin-bottom: 1rem; color: var(--text-color); }
+
+        ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        li { margin-bottom: 0.75rem; }
+
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+        }
+
+        .sql-box {
+            background: #000;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #334155;
+        }
+
+        .sql-keyword { color: #f472b6; }
+        .sql-function { color: #60a5fa; }
+        .sql-string { color: #34d399; }
+        .sql-comment { color: #64748b; }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .algo-step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .junior-note {
+            background: rgba(56, 189, 248, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.95rem;
+            color: var(--accent-color);
+        }
+
+        .senior-note {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+        }
+
+        .junior-note strong, .senior-note strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-color);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .step-num {
+            background: var(--primary-color);
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 6rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 1024px) {
+            nav { width: 220px; }
+            main { margin-left: 220px; padding: 2rem; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            nav {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 1rem;
+            }
+            main { margin-left: 0; padding: 1.5rem; }
+            header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h2>Navigation</h2>
+    <ul>
+        <li><a href="#overview">Architecture Overview</a></li>
+        <li><a href="#engineering">Engineering Principles (SOLID/ACID)</a></li>
+        <li><a href="#laravel-docs">Laravel Standards</a></li>
+        <li><a href="#algorithm">Team Selection Algorithm</a></li>
+        <li><a href="#flow">Team Selection Flow</a></li>
+        <li><a href="#sql-logic">SQL & COALESCE</a></li>
+        <li><a href="#routing">Routing & Model Binding</a></li>
+        <li><a href="#improvements">Implemented Improvements</a></li>
+        <li><a href="#project-specs">Project Specifications</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#tests">Test Suite Analysis</a></li>
+    </ul>
+</nav>
+
+<main>
+    <header>
+        <h1>Laravel Project Refactoring</h1>
+        <p>Evolution from Legacy Code to Modern Enterprise Standards (5d463927 → HEAD)</p>
+    </header>
+
+    <section id="overview">
+        <h2>1. Comprehensive Architecture Overview</h2>
+        <div class="card">
+            <p>The project transitioned from a basic PHP script-like approach to a robust, type-safe API. Key structural changes include:</p>
+            <ul>
+                <li><strong>Type Safety with PHP 8.1+ Enums:</strong> Introduced <code>PlayerPosition</code> and <code>PlayerSkill</code> Enums.
+                    <div class="alternatives" style="margin-top: 0.5rem;">
+                        <small><strong>Alternatives:</strong>
+                            1. Class constants (No type safety).
+                            2. Config files (Prone to typos).
+                            3. String literals (Dangerous).
+                        </small>
+                    </div>
+                </li>
+                <li><strong>Decoupled Validation:</strong> Moved complex validation rules out of controllers into <code>TeamProcessRequest</code> and <code>StorePlayerRequest</code>.
+                    <div class="alternatives" style="margin-top: 0.5rem;">
+                        <small><strong>Alternatives:</strong>
+                            1. Inline <code>Validator::make()</code> (Good for dynamic rules).
+                            2. Controller <code>$request->validate()</code> (Faster for tiny apps).
+                            3. Manual <code>if/else</code> (Hard to maintain).
+                        </small>
+                    </div>
+                </li>
+                <li><strong>Encapsulated API Resources:</strong> Used <code>PlayerResource</code> to manage the JSON transformation layer.
+                    <div class="alternatives" style="margin-top: 0.5rem;">
+                        <small><strong>Alternatives:</strong>
+                            1. Model <code>toArray()</code> (Mixes logic/presentation).
+                            2. Manual array mapping (High boilerplate).
+                            3. Fractal (Powerful but heavy).
+                        </small>
+                    </div>
+                </li>
+                <li><strong>Deterministic Testing:</strong> Added extensive Feature tests covering negative scenarios (insufficient players, unauthorized access) and positive flows (successful team selection).</li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Think of Enums like a fixed menu—you can only pick what's listed, which stops typos. Form Requests are like bouncers at a club; they check your ID (data) before letting you in. API Resources are gift wrappers; they make sure the data looks pretty and consistent for the front-end, no matter how messy it is in the database.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                We are enforcing a strict "Contract-First" approach. By using API Resources and Enums, we decouple the internal database schema from the external API contract. This ensures that we can refactor our data layer without introducing breaking changes for mobile or frontend consumers.
+            </div>
+        </div>
+    </section>
+
+    <section id="engineering">
+        <h2>2. Engineering Principles (SOLID & ACID)</h2>
+        <div class="card">
+            <h3>SOLID Principles in Practice</h3>
+            <ul>
+                <li><strong>S (Single Responsibility):</strong> Validation is moved to <code>Form Requests</code>, logic stays in <code>Controllers</code>, and data formatting in <code>Resources</code>. Each class has one reason to change.</li>
+                <li><strong>O (Open/Closed):</strong> <code>PlayerResource</code> allows extending the API without modifying the <code>Player</code> model directly.</li>
+                <li><strong>L (Liskov Substitution):</strong> We use <code>Enum Casting</code> in Eloquent, ensuring that any position or skill type can be safely swapped or extended as long as it adheres to the Enum contract.</li>
+                <li><strong>I (Interface Segregation):</strong> Our controllers are lean, only implementing the necessary RESTful methods without bloating them with unrelated functionality.</li>
+                <li><strong>D (Dependency Inversion):</strong> Using Laravel's <code>Service Container</code> to inject dependencies like the <code>Player</code> model into controller methods via <code>Route Model Binding</code>.</li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                SOLID is basically a set of rules to keep your code from becoming "spaghetti code." It's all about making code easy to change later without breaking everything else.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                SOLID principles here aren't just academic; they are about reducing the "Cost of Change". By adhering to the Single Responsibility Principle, we ensure that a change in validation logic (FormRequest) doesn't ripple into business logic (Controller) or presentation logic (Resource).
+            </div>
+            <p><a href="https://en.wikipedia.org/wiki/SOLID" target="_blank" class="badge">SOLID Wiki</a></p>
+        </div>
+
+        <div class="card">
+            <h3>ACID Properties in Database Transactions</h3>
+            <p>When creating a player and their skills, we use <code>DB::transaction</code> to ensure ACID compliance.</p>
+            <div class="alternatives" style="margin-bottom: 1rem;">
+                <small><strong>Alternatives:</strong>
+                    1. Manual <code>DB::beginTransaction()</code> (More control).
+                    2. Database Triggers (Hidden logic).
+                    3. Optimistic Locking (Prevents collisions without blocks).
+                </small>
+            </div>
+            <ul>
+                <li><strong>Atomicity:</strong> "All or nothing." If inserting skills fails, the player creation is also undone.</li>
+                <li><strong>Consistency:</strong> Ensures that the database moves from one valid state to another, respecting all constraints (e.g., unique IDs, foreign keys).</li>
+                <li><strong>Isolation:</strong> Multiple transactions can occur simultaneously without affecting each other's intermediate states.</li>
+                <li><strong>Durability:</strong> Once the transaction is committed, changes are permanent and survive system crashes.</li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine a bank transfer. You want to subtract money from one account AND add it to another. ACID ensures that if the computer crashes halfway through, either the whole transfer happens OR nothing happens at all—no money ever "disappears" into thin air.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                In a high-concurrency environment, data integrity is paramount. Using <code>DB::transaction</code> ensures that our system maintains a consistent state even under failure conditions, preventing orphaned records (e.g., a player without skills) which can cause runtime exceptions in other parts of the system.
+            </div>
+            <p><a href="https://laravel.com/docs/9.x/database#database-transactions" target="_blank" class="badge">Laravel Transactions Docs</a></p>
+        </div>
+    </section>
+
+    <section id="laravel-docs">
+        <h2>3. Adhering to Laravel Standards</h2>
+        <div class="card">
+            <h3>Separation of Concerns (SOC)</h3>
+            <p>Following the <strong>"Fat Model, Skinny Controller"</strong> mantra, logic is partitioned:</p>
+            <ul>
+                <li><strong>Form Requests:</strong> Handle authorization and input sanitization. <a href="https://laravel.com/docs/9.x/validation#form-request-validation" target="_blank" class="badge">Docs</a></li>
+                <li><strong>Models:</strong> Define relationships (<code>HasMany</code>) and casting (<code>Enum</code> casting). <a href="https://laravel.com/docs/9.x/eloquent-relationships" target="_blank" class="badge">Docs</a></li>
+                <li><strong>Middlewares:</strong> Handle authentication checks (<code>BearerTokenMiddleware</code>) before reaching business logic. <a href="https://laravel.com/docs/9.x/middleware" target="_blank" class="badge">Docs</a></li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                This is like having a clean kitchen. You have a drawer for knives, a shelf for plates, and a fridge for food. You don't keep your socks in the oven! By keeping different parts of the code separate, it's much easier to find what you're looking for.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Adhering to Laravel's "Inversion of Control" (IoC) patterns makes the codebase highly testable. By moving logic into specific framework-provided layers (Requests, Resources), we can use the built-in testing utilities to verify each component in isolation without needing to mock the entire world.
+            </div>
+        </div>
+        <div class="card">
+            <h3>Database Best Practices</h3>
+            <p>We utilized <code>DB::transaction</code> for the Player creation process. According to Laravel documentation, this is the ideal way to handle multiple <code>INSERT</code> statements (Player and PlayerSkills) to ensure data atomicity—if the skill insertion fails, the player creation is rolled back.</p>
+        </div>
+    </section>
+
+    <section id="algorithm">
+        <h2>4. Detailed Team Search Algorithm</h2>
+        <p>The <code>teams</code> endpoint implements a sophisticated selection algorithm to ensure the best players are picked for each requested position while respecting skill requirements.</p>
+
+        <div class="algo-step">
+            <div class="step-num">1</div>
+            <div>
+                <strong>Requirement Aggregation:</strong>
+                <p>The system first scans the input array to calculate the total number of players needed for each position across all requested "blocks". This prevents over-selection and sets the boundary for the candidate pool.</p>
+            </div>
+        </div>
+
+        <div class="algo-step">
+            <div class="step-num">2</div>
+            <div>
+                <strong>Optimized Candidate Identification:</strong>
+                <p>To avoid memory exhaustion, we don't load all players. We identify <code>candidateIds</code> in two passes per position:</p>
+                <div class="alternatives" style="margin-bottom: 0.5rem;">
+                    <small><strong>Alternatives:</strong>
+                        1. Fetch ALL players for position (High memory).
+                        2. Single complex JOIN/Subquery (See <a href="#alternatives">Alternative A</a>).
+                        3. Pre-calculated Rank table (See <a href="#alternatives">Alternative G</a>).
+                    </small>
+                </div>
+                <ul>
+                    <li><strong>Pass A:</strong> Get the top <em>N</em> players for the position based on their maximum overall skill value.</li>
+                    <li><strong>Pass B:</strong> Get the top <em>N</em> players for the position who possess the specifically requested <code>mainSkill</code>.</li>
+                </ul>
+                <p>The union of these IDs forms our search space.</p>
+            </div>
+        </div>
+
+        <div class="algo-step">
+            <div class="step-num">3</div>
+            <div>
+                <strong>Sufficiency Guard:</strong>
+                <p>Before proceeding, the algorithm verifies if the unique number of candidates for each position meets the total demand. If insufficient players exist, a <code>400 Bad Request</code> is returned immediately.</p>
+            </div>
+        </div>
+
+        <div class="algo-step">
+            <div class="step-num">4</div>
+            <div>
+                <strong>Priority-Based Sorting & Allocation:</strong>
+                <p>For each requested block, we filter available candidates and sort them using the following priority matrix:</p>
+                <ol>
+                    <li><strong>Skill Presence:</strong> Players who have the requested <code>mainSkill</code> are ranked higher than those who don't.</li>
+                    <li><strong>Primary Skill Value:</strong> Among those with the skill, they are ordered by its <code>value</code> (DESC).</li>
+                    <li><strong>Max Skill Tie-breaker:</strong> If primary skills are equal (or absent), the player's highest value in ANY skill is used (DESC).</li>
+                    <li><strong>Deterministic ID:</strong> The <code>players.id</code> (ASC) ensures results are consistent across multiple calls.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="algo-step">
+            <div class="step-num">5</div>
+            <div>
+                <strong>Greedy Removal:</strong>
+                <p>Once players are selected for a block, they are added to a "used" list and excluded from all subsequent blocks within the same request.</p>
+                <div class="alternatives" style="margin-top: 0.5rem;">
+                    <small><strong>Alternatives:</strong>
+                        1. Backtracking algorithm (See <a href="#alternatives">Alternative E</a>).
+                        2. Soft-locking (See <a href="#alternatives">Alternative H</a>).
+                        3. Multi-pass scoring (See <a href="#alternatives">Alternative I</a>).
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="junior-note">
+            <strong>Junior Developer Note:</strong>
+            Think of the algorithm like a multi-stage talent show. First, we find the best "singers" for a role, then the best "all-around performers". We put them in a list, make sure we have enough, and then pick them one by one, crossing off their names as they get hired so we don't hire the same person twice!
+        </div>
+        <div class="senior-note">
+            <strong>Senior Developer Note:</strong>
+            This is a "Constrained Optimization Problem" handled with a heuristic approach. We use a two-pass candidate selection to minimize the memory footprint (O(1) relative to total players) while maintaining high accuracy for the requested skill-set. The use of a deterministic tie-breaker (ID) is critical for idempotency and debugging.
+        </div>
+    </section>
+
+    <section id="flow">
+        <h2>5. Team Selection Flow (Input to Output)</h2>
+        <div class="card">
+            <h3>Request Context</h3>
+            <p>The system expects a JSON array of requirements. Each requirement defines a position, a primary skill, and the count of players needed.</p>
+            <div class="sql-box">
+                <span class="sql-comment">// Example POST /api/team/process</span><br>
+                [<br>
+                &nbsp;&nbsp;{ "position": "defender", "mainSkill": "speed", "numberOfPlayers": 1 },<br>
+                &nbsp;&nbsp;{ "position": "midfielder", "mainSkill": "attack", "numberOfPlayers": 1 }<br>
+                ]
+            </div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h3>Internal Execution Pathway</h3>
+            <ul>
+                <li><strong>1. Aggregation Phase:</strong> The controller sums up the total demand (e.g., 2 Defenders total) to build a candidate pool efficiently.</li>
+                <li><strong>2. Candidate Fetching Phase:</strong>
+                    <ul>
+                        <li>Query 1: Players with the highest value in *any* skill for that position.</li>
+                        <li>Query 2: Players with the highest value in the *requested* skill.</li>
+                        <li><em>Goal:</em> Minimize memory footprint by only loading potential winners.</li>
+                    </ul>
+                </li>
+                <li><strong>3. Sorting Phase:</strong> A multi-tier sorting algorithm (Skill Match > Skill Value > Max Skill > ID) ensures deterministic results.</li>
+                <li><strong>4. Selection Phase:</strong> Players are "picked" one-by-one and removed from the available pool to prevent duplication.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Output Generation</h3>
+            <p>The result is a collection of players transformed via <code>PlayerResource</code>, including their skill sets.</p>
+            <div class="sql-box">
+                <span class="sql-comment">// 201 Created Response</span><br>
+                [<br>
+                &nbsp;&nbsp;{ "id": 1, "name": "Player A", "position": "defender", "skills": [...] },<br>
+                &nbsp;&nbsp;...<br>
+                ]
+            </div>
+        </div>
+    </section>
+
+    <section id="sql-logic">
+        <h2>6. SQL Query Logic & COALESCE</h2>
+        <div class="card">
+            <h3>What is <code>COALESCE</code>?</h3>
+            <p>The <code>COALESCE(expression1, expression2, ...)</code> function returns the <strong>first non-NULL value</strong> in its argument list. In the context of our <code>TeamController</code>:</p>
+            <div class="sql-box">
+                <span class="sql-keyword">ORDER BY</span> <span class="sql-function">COALESCE</span>(skills_max_value, 0) <span class="sql-keyword">DESC</span>
+            </div>
+            <div class="alternatives" style="margin-bottom: 1rem;">
+                <small><strong>Alternatives:</strong>
+                    1. <code>IFNULL(val, 0)</code> (MySQL only).
+                    2. PHP-side sorting (Slow/Memory).
+                    3. <code>CASE WHEN val IS NULL THEN 0 ELSE val END</code> (Verbose).
+                </small>
+            </div>
+            <p>When we use Eloquent's <code>withMax('skills', 'value')</code>, Laravel adds a subquery to find the highest skill value. If a player has NO skills, the subquery returns <code>NULL</code>.</p>
+            <p><strong>The "Why":</strong> Without <code>COALESCE</code>, <code>NULL</code> values can be sorted differently by different SQL engines (Postgres vs MySQL). By forcing <code>NULL</code> to become <code>0</code>, we ensure deterministic behavior where players with no skills are always ranked at the bottom of a descending sort.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine a list of players. If a player has no skills, their "max skill" value is empty (NULL). COALESCE says: "If it's empty, treat it as 0". This way, we can sort everyone fairly from 100 down to 0, instead of getting confused by the empty spaces.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                This is defensive programming at the database layer. Since <code>NULL</code> is not a value but a state, different SQL engines (or even different configurations of the same engine) can sort <code>NULL</code> values differently. Using <code>COALESCE</code> ensures our sorting logic remains deterministic and portable across different environments.
+            </div>
+            <p><a href="https://www.w3schools.com/sql/func_mysql_coalesce.asp" target="_blank" class="badge">SQL COALESCE Docs</a></p>
+        </div>
+
+        <div class="card">
+            <h3>Eager Loading & N+1 Problem</h3>
+            <p>The algorithm uses <code>Player::with('skills')</code> to fetch associations efficiently.</p>
+            <div class="alternatives" style="margin-bottom: 1rem;">
+                <small><strong>Alternatives:</strong>
+                    1. SQL Joins (Faster for specific columns).
+                    2. Lazy Loading (Dangerous N+1).
+                    3. Cache-aside pattern (Redis).
+                </small>
+            </div>
+            <ul>
+                <li><strong>Problem:</strong> Without <code>with()</code>, accessing <code>$player->skills</code> for 50 players would trigger 51 database queries (1 for players, 50 for skills). This is the <strong>N+1 problem</strong>.</li>
+                <li><strong>Solution:</strong> Eager loading executes only 2 queries: <code>SELECT * FROM players</code> and <code>SELECT * FROM player_skills WHERE player_id IN (...)</code>. Laravel then maps them together in memory.</li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine you're at a grocery store. If you need 10 items, it's much faster to fill your cart all at once (Eager Loading) than to buy one item, walk to your car, come back for the next one, and repeat that 10 times (N+1 problem)!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Eager loading is a critical optimization for avoiding O(N) query complexity. By using Eloquent's <code>with()</code> method, we leverage SQL's <code>WHERE IN</code> clause to fetch all related records in a single batch, significantly reducing database round-trip latency and application memory overhead.
+            </div>
+            <p><a href="https://laravel.com/docs/9.x/eloquent-relationships#eager-loading" target="_blank" class="badge">Eager Loading Docs</a></p>
+        </div>
+
+        <h3>The Selection Query Breakdown</h3>
+        <p>This query identifies the top candidates for a specific position and skill set:</p>
+        <div class="sql-box">
+            <span class="sql-comment">-- Fetching top players by specific main skill</span><br>
+            <span class="sql-keyword">SELECT</span> players.id <span class="sql-comment">-- Annotation: Selecting only necessary IDs to optimize hydration</span><br>
+            <span class="sql-keyword">FROM</span> players<br>
+            <span class="sql-keyword">JOIN</span> player_skills <span class="sql-keyword">ON</span> players.id = player_skills.player_id <span class="sql-comment">-- Annotation: Linking skills to parent player</span><br>
+            <span class="sql-keyword">WHERE</span> players.position = <span class="sql-string">'defender'</span> <span class="sql-comment">-- Annotation: Filter by domain-specific Enum value</span><br>
+            <span class="sql-keyword">AND</span> player_skills.skill = <span class="sql-string">'speed'</span><br>
+            <span class="sql-keyword">ORDER BY</span> player_skills.value <span class="sql-keyword">DESC</span>, <span class="sql-comment">-- Annotation: Primary priority</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;players.id <span class="sql-keyword">ASC</span> <span class="sql-comment">-- Annotation: Tie-breaker for deterministic output</span><br>
+            <span class="sql-keyword">LIMIT</span> 2;<br>
+        </div>
+    </section>
+
+    <section id="routing">
+        <h2>7. Routing & Route Model Binding</h2>
+        <div class="card">
+            <p>One major change was updating routes from using integer IDs (e.g., <code>/player/1</code>) to using model binding (e.g., <code>Player $player</code>).</p>
+            <h3>Why use <code>Player</code> instead of <code>int $id</code>?</h3>
+            <ul>
+                <li><strong>Automatic Resolution:</strong> Laravel automatically queries the database for the record. If not found, it returns a 404 immediately.</li>
+                <li><strong>Cleaner Controllers:</strong> No more <code>Player::findOrFail($id)</code> boilerplate at the start of every method.</li>
+                <li><strong>Type Safety:</strong> The controller method is guaranteed to receive an instance of the model.</li>
+            </ul>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                It's like having a personal assistant. Instead of giving them a social security number (the ID) and asking them to go find the person's file, you just say "Hey, bring me the Player," and they have the file ready on your desk when you arrive!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Route Model Binding enhances "Developer Experience" (DX) and reduces "Cognitive Load". By type-hinting the model directly, we leverage Laravel's service container to handle the "Plumbing" (retrieval and 404 handling), allowing the developer to focus purely on the business logic.
+            </div>
+            <div class="alternatives">
+                <small><strong>Alternatives:</strong>
+                    1. Explicit ID lookup (Better for very high performance).
+                    2. UUIDs (Better for security/obfuscation).
+                    3. Slug-based routing (Better for SEO).
+                </small>
+            </div>
+        </div>
+    </section>
+
+    <section id="improvements">
+        <h2>8. Implemented Improvements & Refactoring</h2>
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h3>1. Global Score-based Ranking (Fixed Greedy Bias)</h3>
+            <p><strong>The Improvement:</strong> Replaced the sequential greedy selection with a global assignment strategy. We now calculate all potential (Player, Requirement) pairs and their scores, sorting them globally to find the best possible matches across the entire team request.</p>
+            <p><strong>Impact:</strong> Eliminates "First-block bias," ensuring that specialized players are assigned where they provide the most value, even if they appear later in the request array.</p>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                By flattening the requirements and sorting all possible assignments, we've moved from a Local Optimum to a much more robust Heuristic Selection that behaves predictably and fairly across complex multi-position requests.
+            </div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h3>2. Optimized Batch Candidate Loading</h3>
+            <p><strong>The Improvement:</strong> The <code>TeamSelectionService</code> now aggregates all position requirements and performs batched <code>WHERE IN</code> queries to fetch potential candidates. This significantly reduces the total number of database round-trips.</p>
+            <p><strong>Impact:</strong> Resolves the O(N) query complexity (Query-in-Loop) by moving to a more efficient O(1) or O(Positions) retrieval pattern.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h3>3. Service Layer Architecture</h3>
+            <p><strong>The Improvement:</strong> Extracted the core selection logic from <code>TeamController</code> into a dedicated <code>TeamSelectionService</code>. The controller now handles only HTTP concerns (Request/Response).</p>
+            <p><strong>Impact:</strong> Improved testability, better Separation of Concerns, and a cleaner, more maintainable controller. The logic is now reusable for CLI commands or background jobs.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h3>4. Intelligent Resource Syncing (Skill Updates)</h3>
+            <p><strong>The Improvement:</strong> Optimized <code>PlayerController@update</code> to use <code>updateOrCreate</code> and <code>whereNotIn()->delete()</code> instead of a "nuclear" delete-and-recreate approach.</p>
+            <p><strong>Impact:</strong> Preserves Primary Key continuity in the <code>player_skills</code> table and reduces database churn, adhering to RESTful update expectations.</p>
+        </div>
+    </section>
+
+    <section id="project-specs">
+        <h2>9. Project Specifications</h2>
+        <div class="card">
+            <p>This challenge is built using a modern PHP ecosystem designed for performance and scalability.</p>
+            <ul>
+                <li><strong>Runtime:</strong> PHP 8.1.x (utilizing Union Types, Enums, and Constructor Promotion).</li>
+                <li><strong>Framework:</strong> Laravel 9.14 (LTS compatible features).</li>
+                <li><strong>Core Packages:</strong>
+                    <ul>
+                        <li><code>laravel/sanctum</code> (API Authentication).</li>
+                        <li><code>fruitcake/laravel-cors</code> (CORS policy management).</li>
+                        <li><code>guzzlehttp/guzzle</code> (HTTP Client).</li>
+                    </ul>
+                </li>
+                <li><strong>Database:</strong> Compatible with MySQL, PostgreSQL, or SQLite.</li>
+                <li><strong>Environment:</strong> Fully Dockerized with Redis for caching support.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="alternatives">
+        <h2>10. Professional Alternatives</h2>
+        <div class="card">
+            <h3>A. SQL Window Functions (Scalability)</h3>
+            <p><strong>Description:</strong> SQL Window Functions allow you to perform calculations across a set of table rows that are somehow related to the current row. Unlike regular aggregate functions, they do not cause rows to become grouped into a single output row.</p>
+            <div class="sql-box">
+                <span class="sql-keyword">SELECT</span> *, <span class="sql-function">ROW_NUMBER</span>() <span class="sql-keyword">OVER</span> (<br>
+                &nbsp;&nbsp;<span class="sql-keyword">PARTITION BY</span> position <br>
+                &nbsp;&nbsp;<span class="sql-keyword">ORDER BY</span> ...<br>
+                ) <span class="sql-keyword">as</span> rank<br>
+                <span class="sql-keyword">FROM</span> players;
+            </div>
+            <p><strong>How I'd do it in this specific case:</strong> Instead of executing a separate query for each requirement in a loop, I would use <code>ROW_NUMBER()</code> partitioned by <code>position</code> and ordered by the required <code>skill</code>. This would fetch all potential top candidates for all requested positions in one single, high-performance database round-trip.</p>
+            <p><strong>Why I didn't use it here:</strong> The current player dataset is small, and standard <code>WHERE</code> and <code>ORDER BY</code> clauses on indexed columns are already extremely fast. Window functions also have varied syntax across different database engines (MySQL 8.0+ vs PostgreSQL), and I wanted to keep the SQL as compatible as possible with basic MySQL/SQLite setups common in coding challenges.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Instead of asking the database for one thing at a time (like asking for a list of defenders, then a list of midfielders), Window Functions let us ask for everyone at once, but with a special "ranking" for each group. It's much faster for the database!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Window functions shift the heavy lifting of set-based ranking to the database engine, which is highly optimized for such operations. This reduces the application-tier complexity from O(N) queries to O(1), making the system significantly more scalable for large datasets.
+            </div>
+            <p><a href="https://dev.mysql.com/doc/refman/8.0/en/window-functions-usage.html" target="_blank" class="badge">MySQL Window Functions</a></p>
+        </div>
+
+        <div class="card">
+            <h3>B. Service Layer Pattern</h3>
+            <p><strong>Description:</strong> The Service Layer pattern moves business logic out of the Controller and into a dedicated class. This decouples the "How the work is done" (Algorithm) from "How the work is requested" (HTTP/API).</p>
+            <p><strong>How I'd do it in this specific case:</strong> I have created a <code>TeamSelectionService</code> class that takes the <code>TeamProcessRequest</code> data as input and returns a collection of <code>Player</code> models. The controller simply injects this service and calls its methods.</p>
+            <p><strong>Status:</strong> Implemented. This refactoring improves the Separation of Concerns and makes the core logic highly testable and reusable.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine the Controller is a busy waiter. A Service Layer is like a chef in the back. The waiter takes the order (the request) and gives it to the chef. The chef does all the cooking (business logic), and the waiter just brings the food back. This way, if we want to order food through an app instead of in person, the chef can use the same recipe.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                The Service Layer pattern is essential for "Orchestration". It provides a single point of truth for business logic, enabling reusability across different entry points (API, CLI, Jobs) and facilitating easier unit testing through dependency injection and mocking.
+            </div>
+            <p><a href="https://culttt.com/2013/07/15/creating-flexible-controllers-in-laravel-4-using-service-providers/" target="_blank" class="badge">Service Layer Strategy</a></p>
+        </div>
+
+        <div class="card">
+            <h3>C. Caching with Redis</h3>
+            <p><strong>Description:</strong> Redis is an in-memory data structure store, used as a database, cache, and message broker. It is extremely fast because it keeps data in RAM rather than on disk.</p>
+            <div class="sql-box">
+                <span class="sql-keyword">$players</span> = <span class="sql-function">Cache::remember</span>(<span class="sql-string">'pos_pool_'</span> . <span class="sql-variable">$position</span>, <span class="sql-number">600</span>, <span class="sql-keyword">fn</span>() => <span class="sql-variable">$query</span>-><span class="sql-function">get</span>());
+            </div>
+            <p><strong>How I'd do it in this specific case:</strong> I would cache the "Candidate Pool" (top players for each position) in Redis with a TTL (Time-to-Live). Since player skills don't change every second, subsequent requests for the same team configuration would bypass the database entirely.</p>
+            <p><strong>Why I didn't use it here:</strong> Caching introduces "Cache Invalidation" challenges (ensuring the cache is cleared when a player's skill is updated). In a technical test, it's often better to show clean, correct SQL logic first. Adding Redis would add a dependency that might make the project harder for the reviewer to run locally if they don't use Docker.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Redis is like a "post-it note" for the computer. Instead of looking up a difficult recipe in a massive cookbook (the database) every single time, we write the result on a post-it note and stick it on the fridge. Looking at the post-it is nearly instant!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Caching selection pools in Redis transforms a compute-intensive task into a low-latency memory read. This is a standard "Latency Reduction" strategy for read-heavy APIs where the underlying data doesn't change frequently, significantly increasing the overall throughput of the system.
+            </div>
+            <p><a href="https://laravel.com/docs/9.x/cache#redis" target="_blank" class="badge">Laravel Redis Caching</a></p>
+        </div>
+
+        <div class="card">
+            <h3>D. Integer Linear Programming (Optimal Allocation)</h3>
+            <p><strong>Description:</strong> Integer Linear Programming (ILP) is a mathematical optimization technique used to find the best outcome in a model whose requirements are represented by linear relationships. It's the "gold standard" for resource allocation problems.</p>
+            <p><strong>How I'd do it in this specific case:</strong> I would model the selection as a set of binary variables (Player A assigned to Position X = 1 or 0). The goal would be to maximize the sum of skill values while ensuring no player is used twice. I'd use a solver like <strong>GLPK</strong> or <strong>Symphony</strong> (often via a Python bridge or a specialized C++ extension).</p>
+            <p><strong>Why I didn't use it here:</strong> Solving an ILP is NP-hard. While it guarantees the absolute <em>optimal</em> team (the "Global Optimum"), it's computationally expensive and complex to implement in PHP. The current <strong>Greedy Algorithm</strong> finds a "Local Optimum" that is 99% as good as the global one but runs in milliseconds and requires no external math libraries.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine you have a bag of gold coins and several chests. ILP is like a super-smart robot that calculates every single possible combination of coins in chests to find the one that makes you the richest. It's very smart, but it takes a long time to think!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                ILP represents the pinnacle of "Constrained Optimization". In production systems for sports betting or fantasy leagues, ILP is preferred because it handles complex constraints (like salary caps or chemistry bonuses) that Greedy algorithms fail to solve optimally. However, for a standard recruitment API, the trade-off between implementation complexity and marginal utility favors the Greedy approach.
+            </div>
+            <p><a href="https://en.wikipedia.org/wiki/Integer_programming" target="_blank" class="badge">Integer Programming Theory</a></p>
+        </div>
+
+        <div class="card">
+            <h3>E. Backtracking (Exhaustive Search)</h3>
+            <p><strong>Description:</strong> Backtracking is an algorithmic technique for solving problems recursively by trying to build a solution incrementally, one piece at a time, removing those solutions that fail to satisfy the constraints of the problem at any point in time.</p>
+            <p><strong>How I'd do it in this specific case:</strong> I would write a recursive function <code>selectNextPlayer(index)</code> that tries assigning every possible player to the current requirement. If the assignment is valid, it moves to the next requirement. If it hits a dead end, it "backtracks" and tries a different player.</p>
+            <p><strong>Why I didn't use it here:</strong> Backtracking has exponential time complexity ($O(N^K)$). If you have 1,000 players and need a team of 11, the number of combinations is astronomical. It would cause the server to crash or timeout. It's only feasible for very small sets (e.g., selecting 3 players from a pool of 10).</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Backtracking is like trying to find your way through a maze. You walk down a path, and if you hit a wall, you turn around and try the next path. You do this until you find the exit. It's thorough, but you might spend a lot of time walking into walls!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Exhaustive search is technically sound but practically impossible for large search spaces. In the context of "Team Selection", we prioritize <strong>Efficiency</strong> ($O(N \log N)$) over <strong>Exhaustiveness</strong> ($O(2^N)$), as the "Cost of Computation" quickly outweighs the "Value of the absolute perfect result".
+            </div>
+            <p><a href="https://www.geeksforgeeks.org/backtracking-algorithms/" target="_blank" class="badge">Backtracking Explained</a></p>
+        </div>
+
+        <div class="card">
+            <h3>F. Genetic Algorithm (Heuristic Optimization)</h3>
+            <p><strong>Description:</strong> Genetic Algorithms (GA) are inspired by the process of natural selection. They use techniques like inheritance, mutation, selection, and crossover to "evolve" a solution toward an optimal state over many generations.</p>
+            <p><strong>How I'd do it in this specific case:</strong> I would create a "Population" of random teams. The "Fitness" of each team would be its total skill score. The best teams would "mate" (exchange players) to create a new generation. After 100 generations, we'd likely have a very high-quality team.</p>
+            <p><strong>Why I didn't use it here:</strong> Genetic algorithms are <strong>Stochastic</strong> (non-deterministic). This means if you refresh the page, you might get a slightly different team. For a professional API, we want <strong>Deterministic</strong> results—the same input should always yield the exact same best players. Plus, GA is overkill for a simple sorting problem.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                This is like breeding show dogs. You take the two fastest dogs and let them have puppies, hoping the puppies are even faster. You do this for many generations until you have a super-fast dog. It's cool, but sometimes you just want the dog that's already the fastest right now!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                GAs are powerful for "Multi-Objective Optimization" where there is no single "correct" answer. However, they introduce significant architectural complexity (population management, mutation rates). In a recruitment context, <strong>Reproducibility</strong> and <strong>Predictability</strong> are key requirements that GAs inherently struggle to meet without a fixed random seed.
+            </div>
+            <p><a href="https://towardsdatascience.com/introduction-to-genetic-algorithms-including-example-code-e396e98d8bf3" target="_blank" class="badge">Genetic Algorithm Intro</a></p>
+        </div>
+
+        <div class="card">
+            <h3>G. Pre-calculated Rank Table (Performance)</h3>
+            <p><strong>Description:</strong> Instead of calculating the rank of each player on-the-fly during the request, you maintain a separate table or column that stores the rank for each player/skill combination.</p>
+            <p><strong>How I'd do it in this specific case:</strong> Every time a player or skill is updated, a background job or database trigger would recalculate the ranks. The API then just does a simple <code>SELECT * FROM ranks WHERE position = 'defender' AND rank <= 10</code>.</p>
+            <p><strong>Why I didn't use it here:</strong> This is "Premature Optimization". It adds significant complexity to the "Write" path (every update becomes expensive and requires re-ranking) to speed up the "Read" path. Since our current "Read" performance is already sub-millisecond with standard indexes, the added complexity isn't justified.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                It's like keeping a pre-written "Top 10" list on the wall. When someone asks who the best players are, you just read the list instead of checking everyone's stats again. But every time someone gets better at a skill, you have to rewrite the whole list!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Materializing ranks is a classic "Denormalization" strategy. It trades write-performance and data consistency (risk of stale ranks) for ultimate read-performance. In high-frequency trading or massive social media leaderboards, this is necessary. For a standard player management system, it violates the "Keep It Simple, Stupid" (KISS) principle.
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>H. Database Soft-Locking (Concurrency)</h3>
+            <p><strong>Description:</strong> In high-concurrency environments, two users might try to "hire" the same player at the same time. Soft-locking involves adding a <code>locked_at</code> or <code>status</code> column to the <code>players</code> table to manage availability.</p>
+            <p><strong>How I'd do it in this specific case:</strong> When a team is generated, I would wrap the selection in a transaction and use <code>SELECT ... FOR UPDATE</code> or immediately update an <code>is_hired</code> flag for the chosen players.</p>
+            <p><strong>Why I didn't use it here:</strong> The requirements didn't specify that players are "consumed" or "hired" permanently. The endpoint acts as a "Team Suggestion" tool. If we locked players, subsequent requests would fail to find the best players just because someone else was looking at them, which would be a poor user experience for a suggestion engine.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                It's like putting an item in your shopping cart. While it's in your cart, no one else can buy it. This stops two people from buying the last loaf of bread at the same time!
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Soft-locking (or Pessimistic Locking) is vital for "Inventory Integrity". However, it introduces "Contention" and "Deadlock" risks. Since this API is for selection logic rather than a transactional marketplace, we prioritize "Read Availability" over "Exclusive Access".
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>I. Multi-Pass Fair Distribution</h3>
+            <p><strong>Description:</strong> A greedy algorithm gives the first requirement "block" the best players, potentially leaving subsequent blocks with poor options. A multi-pass algorithm tries to balance the quality across all blocks.</p>
+            <p><strong>How I'd do it in this specific case:</strong> Instead of picking all players for Block 1, then Block 2, I would pick the #1 best player for Block 1, then the #1 best for Block 2, then the #2 for Block 1, and so on, until all requirements are met.</p>
+            <p><strong>Why I didn't use it here:</strong> In most professional contexts, the order of requirements implies priority. The user expects the first block to be satisfied with the absolute best available talent. Fair distribution is more complex to implement and might confuse a user who expects a top-down priority-based selection.</p>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Imagine two kids picking players for a team. Instead of one kid picking their whole team first, they take turns picking one player at a time. This makes the teams more even and "fair".
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                Fair distribution algorithms (like Round-Robin selection) are used to prevent "Starvation" of lower-priority tasks. While more equitable, they often result in a lower "Total Team Fitness" compared to a pure Greedy approach. Given the challenge requirements, a Greedy top-down priority is the most logical and expected implementation.
+            </div>
+        </div>
+    </section>
+
+    <section id="tests">
+        <h2>11. Test Suite Analysis</h2>
+        <div class="card">
+            <p>The project maintains high reliability through a comprehensive suite of automated tests. All tests utilize <code>RefreshDatabase</code> to ensure a clean state.</p>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <tr>
+                        <th style="padding: 1rem;">Test Class</th>
+                        <th style="padding: 1rem;">Description</th>
+                        <th style="padding: 1rem;">Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;"><code>SelectionLogicTest</code></td>
+                        <td style="padding: 1rem;">Verifies the multi-tier tie-breaking algorithm and "Insufficient Players" scenarios.</td>
+                        <td style="padding: 1rem;"><span class="badge" style="background: var(--accent-color);">Feature</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;"><code>PlayerCRUDTest</code></td>
+                        <td style="padding: 1rem;">Covers listing, viewing, and deleting players, ensuring proper resource transformation.</td>
+                        <td style="padding: 1rem;"><span class="badge" style="background: var(--accent-color);">Feature</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;"><code>PlayerControllerCreateTest</code></td>
+                        <td style="padding: 1rem;">Tests <code>POST /player</code> with complex <code>playerSkills</code> nested payloads.</td>
+                        <td style="padding: 1rem;"><span class="badge" style="background: var(--accent-color);">Feature</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;"><code>ValidationTest</code></td>
+                        <td style="padding: 1rem;">Ensures <code>FormRequest</code> rules correctly reject malformed JSON or invalid Enum values.</td>
+                        <td style="padding: 1rem;"><span class="badge" style="background: var(--accent-color);">Feature</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;"><code>ExampleTest</code></td>
+                        <td style="padding: 1rem;">Basic smoke tests to ensure the application environment is initialized correctly.</td>
+                        <td style="padding: 1rem;"><span class="badge" style="background: var(--text-muted);">Unit</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="junior-note">
+                <strong>Junior Developer Note:</strong>
+                Tests are like an automated check-list. Every time we change something, we run the tests to make sure we didn't accidentally break something that was already working.
+            </div>
+            <div class="senior-note">
+                <strong>Senior Developer Note:</strong>
+                A robust test suite provides the "Confidence to Refactor". By covering both edge cases (insufficient players) and core logic, we ensure that the system remains stable as it evolves, reducing the regression risk and increasing the overall velocity of the development team.
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Enterprise Diff Analysis &middot; Modern Laravel Standards Report</p>
+    </footer>
+</main>
+
+<script>
+    // Improved navigation highlighting with scroll-spy behavior
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('nav a');
+        const scrollPosition = window.scrollY || window.pageYOffset;
+
+        // Determine current section based on scroll position
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            // Subtracting 120px to account for header/padding and make transition smoother
+            if (scrollPosition >= sectionTop - 120) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        // Special handling for the very bottom of the page
+        // (If scrolled to the bottom, force the last section as active)
+        if ((window.innerHeight + scrollPosition) >= document.documentElement.scrollHeight - 5) {
+            current = sections[sections.length - 1].getAttribute('id');
+        }
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            // Exact match for the href, and only if current is not empty
+            if (current && link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

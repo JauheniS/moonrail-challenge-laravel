@@ -1,10 +1,5 @@
 <?php
 
-// /////////////////////////////////////////////////////////////////////////////
-// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW.
-// YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
-// /////////////////////////////////////////////////////////////////////////////
-
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePlayerRequest;
@@ -45,8 +40,17 @@ class PlayerController extends Controller
         $player = DB::transaction(function () use ($player, $request) {
             $player->update($request->validated());
 
-            $player->skills()->delete();
-            $player->skills()->createMany($request->input('playerSkills'));
+            $newSkills = collect($request->input('playerSkills'));
+            $skillNames = $newSkills->pluck('skill')->toArray();
+
+            $player->skills()->whereNotIn('skill', $skillNames)->delete();
+
+            foreach ($newSkills as $skillData) {
+                $player->skills()->updateOrCreate(
+                    ['skill' => $skillData['skill']],
+                    ['value' => $skillData['value']]
+                );
+            }
 
             return $player;
         });

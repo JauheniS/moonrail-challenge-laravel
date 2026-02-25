@@ -4,13 +4,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: app
+    user: root
     restart: unless-stopped
     working_dir: /var/www
     volumes:
       - .:/var/www
     ports:
       - "3000:3000"
-    command: /bin/sh -c "php-fpm -D && php artisan serve --host=0.0.0.0"
+    command: /bin/sh -c "composer install && php-fpm -D && php artisan serve --host=0.0.0.0"
     networks:
       - laravel-network
     depends_on:
