@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    ports:
+      - "3000:3000"
+    command: /bin/sh -c "php-fpm -D && php artisan serve --host=0.0.0.0 --port=3000"
+    networks:
+      - laravel-network
+    depends_on:
+      - redis
+    platform: linux/amd64
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel-network
+    platform: linux/amd64
+
+networks:
+  laravel-network:
+    driver: bridge
