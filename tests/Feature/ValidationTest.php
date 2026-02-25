@@ -47,7 +47,7 @@ class ValidationTest extends TestCase
 
         $res->assertStatus(400);
         $res->assertJson([
-            "message" => "Invalid value for skill: defense1"
+            "message" => "Invalid value for playerSkills.0.skill: defense1"
         ]);
     }
 
@@ -98,5 +98,56 @@ class ValidationTest extends TestCase
         $res->assertJson([
             "message" => "Invalid value for numberOfPlayers: abc"
         ]);
+    }
+
+    public function test_error_message_for_field_inside_array()
+    {
+        $data = [
+            "name" => "Test Player",
+            "position" => "defender",
+            "playerSkills" => [
+                [
+                    "skill" => "speed",
+                    "value" => "not-an-integer"
+                ]
+            ]
+        ];
+
+        $response = $this->postJson('/api/player', $data);
+
+        $response->assertStatus(400);
+        $response->assertJson([
+            "message" => "Invalid value for playerSkills.0.value: not-an-integer"
+        ]);
+    }
+
+    public function test_only_first_error_is_returned()
+    {
+        $data = [
+            "name" => "Test Player",
+            "position" => "invalid-position",
+            "playerSkills" => [
+                [
+                    "skill" => "invalid-skill",
+                    "value" => "not-an-integer"
+                ]
+            ]
+        ];
+
+        $response = $this->postJson('/api/player', $data);
+
+        $response->assertStatus(400);
+        $json = $response->json();
+
+        $this->assertArrayHasKey('message', $json);
+        $this->assertCount(1, $json);
+
+        $possibleMessages = [
+            "Invalid value for position: invalid-position",
+            "Invalid value for playerSkills.0.skill: invalid-skill",
+            "Invalid value for playerSkills.0.value: not-an-integer"
+        ];
+
+        $this->assertContains($json['message'], $possibleMessages);
     }
 }

@@ -22,7 +22,7 @@ class UpdatePlayerRequest extends FormRequest
             'name' => 'required',
             'position' => ['required', new Enum(PlayerPosition::class)],
             'playerSkills' => 'required|array|min:1',
-            'playerSkills.*.skill' => ['required', new Enum(PlayerSkill::class)],
+            'playerSkills.*.skill' => ['required', new Enum(PlayerSkill::class), 'distinct'],
             'playerSkills.*.value' => 'required|integer',
         ];
     }
