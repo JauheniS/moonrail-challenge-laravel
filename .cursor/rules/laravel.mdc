@@ -1,0 +1,17 @@
+# Laravel Development Skillset
+
+## Description
+Expertise in Laravel 8/9+ development, focusing on the Service-Controller-Model pattern, Docker integration, and API development.
+
+## Instructions
+- When creating new features, follow the existing pattern: Route -> Controller -> Service -> Model.
+- Always check `app/Http/Requests` for validation rules before modifying controller logic.
+- Use `App\Http\Resources` for all API responses to ensure consistency.
+- When adding new routes, check `routes/api.php` and ensure proper middleware is applied.
+- All database operations in Services should be wrapped in `DB::transaction` if they involve multiple writes.
+
+## Docker Commands
+- `docker compose exec app php artisan make:controller <Name>`
+- `docker compose exec app php artisan make:model <Name> -m`
+- `docker compose exec app php artisan make:service <Name>` (Manual creation required as Laravel doesn't have a native service generator)
+- `docker compose exec app php artisan migrate`

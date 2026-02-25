@@ -6,61 +6,43 @@ use App\Http\Requests\StorePlayerRequest;
 use App\Http\Requests\UpdatePlayerRequest;
 use App\Http\Resources\PlayerResource;
 use App\Models\Player;
-use Illuminate\Support\Facades\DB;
+use App\Services\PlayerService;
 
 class PlayerController extends Controller
 {
-    public function index()
+    public function __construct(
+        protected PlayerService $playerService
+    ) {}
+
+    public function index(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        return PlayerResource::collection(Player::with('skills')->get());
+        return PlayerResource::collection($this->playerService->getAll());
     }
 
-    public function show(Player $player)
+    public function show(Player $player): PlayerResource
     {
-        return new PlayerResource($player->load('skills'));
+        return new PlayerResource($player->loadMissing('skills'));
     }
 
-    public function store(StorePlayerRequest $request)
+    public function store(StorePlayerRequest $request): \Illuminate\Http\JsonResponse
     {
-        $player = DB::transaction(function () use ($request) {
-            $player = Player::create($request->validated());
+        $player = $this->playerService->create($request->validated() + ['playerSkills' => $request->input('playerSkills')]);
 
-            $player->skills()->createMany($request->input('playerSkills'));
-
-            return $player;
-        });
-
-        return (new PlayerResource($player->load('skills')))
+        return (new PlayerResource($player->loadMissing('skills')))
             ->response()
             ->setStatusCode(201);
     }
 
-    public function update(UpdatePlayerRequest $request, Player $player)
+    public function update(UpdatePlayerRequest $request, Player $player): PlayerResource
     {
-        $player = DB::transaction(function () use ($player, $request) {
-            $player->update($request->validated());
+        $player = $this->playerService->update($player, $request->validated() + ['playerSkills' => $request->input('playerSkills')]);
 
-            $newSkills = collect($request->input('playerSkills'));
-            $skillNames = $newSkills->pluck('skill')->toArray();
-
-            $player->skills()->whereNotIn('skill', $skillNames)->delete();
-
-            foreach ($newSkills as $skillData) {
-                $player->skills()->updateOrCreate(
-                    ['skill' => $skillData['skill']],
-                    ['value' => $skillData['value']]
-                );
-            }
-
-            return $player;
-        });
-
-        return new PlayerResource($player->load('skills'));
+        return new PlayerResource($player->loadMissing('skills'));
     }
 
-    public function destroy(Player $player)
+    public function destroy(Player $player): \Illuminate\Http\JsonResponse
     {
-        $player->delete();
+        $this->playerService->delete($player);
         return response()->json(['message' => 'Player deleted']);
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 trait HandlesValidationErrors
 {
-    protected function failedValidation(Validator $validator)
+    protected function failedValidation(Validator $validator): void
     {
         $failed = $validator->failed();
         $failedField = array_key_first($failed) ?? array_key_first($validator->errors()->toArray());
