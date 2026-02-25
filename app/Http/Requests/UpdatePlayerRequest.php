@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
+use App\Enums\PlayerPosition;
+use App\Enums\PlayerSkill;
 
 class UpdatePlayerRequest extends FormRequest
 {
@@ -17,9 +20,9 @@ class UpdatePlayerRequest extends FormRequest
     {
         return [
             'name' => 'required',
-            'position' => 'required|in:defender,midfielder,forward',
+            'position' => ['required', new Enum(PlayerPosition::class)],
             'playerSkills' => 'required|array|min:1',
-            'playerSkills.*.skill' => 'required|in:defense,attack,speed,strength,stamina',
+            'playerSkills.*.skill' => ['required', new Enum(PlayerSkill::class)],
             'playerSkills.*.value' => 'required|integer',
         ];
     }
