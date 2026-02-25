@@ -1,7 +1,7 @@
 <?php
 
 // /////////////////////////////////////////////////////////////////////////////
-// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW.
+// PLEASE DO NOT RENAME OR REMOVE ANY OF the CODE BELOW.
 // YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
 // YOU SHOULD NOT CHANGE THE DATABASE STRUCTURE, ADDING NEW FIELDS, RENAMING OR REMOVING THE CURRENT FIELDS MAY RESULT IN A FAILED TEST
 // /////////////////////////////////////////////////////////////////////////////
@@ -23,11 +23,7 @@ class PlayerSkill extends Model
 
     protected $fillable = [
         'skill',
-        'value'
-    ];
-
-    protected $hidden = [
-        'id',
+        'value',
         'player_id'
     ];
 

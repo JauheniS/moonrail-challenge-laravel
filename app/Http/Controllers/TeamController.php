@@ -2,33 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TeamProcessRequest;
+use App\Http\Resources\PlayerResource;
 use App\Models\Player;
-use Illuminate\Http\Request;
 
 class TeamController extends Controller
 {
-    public function process(Request $request)
+    public function process(TeamProcessRequest $request)
     {
-        $input = $request->all();
+        $input = $request->validated();
 
-        // If it's a single object, wrap it in an array
-        if (isset($input['position'])) {
-            $dataToValidate = [$input];
-            $isSingle = true;
-        } else {
-            $dataToValidate = $input;
-            $isSingle = false;
-        }
-
-        $request->replace($dataToValidate);
-
-        $request->validate([
-            '*.position' => 'required|string|in:defender,midfielder,forward',
-            '*.mainSkill' => 'required|string|in:defense,attack,speed,strength,stamina',
-            '*.numberOfPlayers' => 'required|integer|min:1',
-        ]);
-
-        $input = $request->all();
+        $positions = array_unique(array_column($input, 'position'));
+        $allCandidates = Player::with('skills')->whereIn('position', $positions)->get();
 
         $selectedPlayers = [];
         $usedPlayerIds = [];
@@ -38,18 +23,16 @@ class TeamController extends Controller
             $mainSkill = $req['mainSkill'];
             $needed = $req['numberOfPlayers'];
 
-            $candidates = Player::where('position', $position)
-                ->whereNotIn('id', $usedPlayerIds)
-                ->get();
+            $candidates = $allCandidates->filter(fn ($p) => $p->position->value === $position)
+                ->whereNotIn('id', $usedPlayerIds);
 
             if ($candidates->count() < $needed) {
                 return response()->json(['message' => "Insufficient number of players for position: {$position}"], 400);
             }
 
-            // Sort candidates
             $sorted = $candidates->sort(function ($a, $b) use ($mainSkill) {
-                $aSkill = $a->skills->first(fn($s) => $s->skill->value === $mainSkill);
-                $bSkill = $b->skills->first(fn($s) => $s->skill->value === $mainSkill);
+                $aSkill = $a->skills->first(fn ($s) => $s->skill->value === $mainSkill);
+                $bSkill = $b->skills->first(fn ($s) => $s->skill->value === $mainSkill);
 
                 $aVal = $aSkill ? $aSkill->value : 0;
                 $bVal = $bSkill ? $bSkill->value : 0;
@@ -58,8 +41,8 @@ class TeamController extends Controller
                     return $bVal <=> $aVal;
                 }
 
-                $aMaxOther = $a->skills->filter(fn($s) => $s->skill->value !== $mainSkill)->max('value') ?? 0;
-                $bMaxOther = $b->skills->filter(fn($s) => $s->skill->value !== $mainSkill)->max('value') ?? 0;
+                $aMaxOther = $a->skills->filter(fn ($s) => $s->skill->value !== $mainSkill)->max('value') ?? 0;
+                $bMaxOther = $b->skills->filter(fn ($s) => $s->skill->value !== $mainSkill)->max('value') ?? 0;
 
                 if ($aMaxOther != $bMaxOther) {
                     return $bMaxOther <=> $aMaxOther;
@@ -75,6 +58,6 @@ class TeamController extends Controller
             }
         }
 
-        return response()->json($selectedPlayers);
+        return PlayerResource::collection($selectedPlayers);
     }
 }

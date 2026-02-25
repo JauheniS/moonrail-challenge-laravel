@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property integer $id
  * @property string $name
  * @property PlayerPosition $position
- * @property PlayerSkill $skill
+ * @property \Illuminate\Database\Eloquent\Collection|PlayerSkill[] $skills
  */
 class Player extends Model
 {
@@ -33,22 +33,6 @@ class Player extends Model
     protected $casts = [
         'position' => PlayerPosition::class
     ];
-
-    protected $with = ['skills'];
-
-    protected $appends = ['playerSkills'];
-
-    public function getPlayerSkillsAttribute()
-    {
-        return $this->skills;
-    }
-
-    public function toArray()
-    {
-        $array = parent::toArray();
-        unset($array['skills']);
-        return $array;
-    }
 
     public function skills(): HasMany
     {

@@ -46,6 +46,37 @@ class SelectionLogicTest extends PlayerControllerBaseTest
         $this->assertEquals('P1', $data[1]['name']);
     }
 
+    public function test_selection_logic_multiple_requirements()
+    {
+        $p1 = Player::create(['name' => 'P1', 'position' => 'defender']);
+        $p1->skills()->create(['skill' => 'speed', 'value' => 80]);
+
+        $p2 = Player::create(['name' => 'P2', 'position' => 'midfielder']);
+        $p2->skills()->create(['skill' => 'attack', 'value' => 90]);
+
+        $requirements = [
+            [
+                'position' => "defender",
+                'mainSkill' => "speed",
+                'numberOfPlayers' => 1
+            ],
+            [
+                'position' => "midfielder",
+                'mainSkill' => "attack",
+                'numberOfPlayers' => 1
+            ]
+        ];
+
+        $res = $this->postJson(self::REQ_TEAM_URI, $requirements);
+
+        $res->assertStatus(200);
+        $data = $res->json();
+
+        $this->assertCount(2, $data);
+        $this->assertEquals('P1', $data[0]['name']);
+        $this->assertEquals('P2', $data[1]['name']);
+    }
+
     public function test_insufficient_players()
     {
         Player::create(['name' => 'P1', 'position' => 'defender'])

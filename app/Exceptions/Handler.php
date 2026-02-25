@@ -1,14 +1,16 @@
 <?php
 
 // /////////////////////////////////////////////////////////////////////////////
-// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW. 
+// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW.
 // YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
 // /////////////////////////////////////////////////////////////////////////////
 
 namespace App\Exceptions;
 
-use Exception;
+use App\Models\Player;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -40,8 +42,21 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->renderable(function (Exception $e, $request) {
-            //
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            $prev = $e->getPrevious();
+            if ($prev instanceof ModelNotFoundException && $prev->getModel() === Player::class) {
+                return response()->json(['message' => 'Player not found'], 404);
+            }
+
+            return null;
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, $request) {
+            if ($e->getModel() === Player::class) {
+                return response()->json(['message' => 'Player not found'], 404);
+            }
+
+            return null;
         });
     }
 }

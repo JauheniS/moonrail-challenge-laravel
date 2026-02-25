@@ -5,33 +5,21 @@
 // YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
 // /////////////////////////////////////////////////////////////////////////////
 
+use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PlayerController;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix'=>'player'], function () {
-    $idInThePath = '/{id}';
+Route::prefix('player')->group(function () {
     Route::get('/', [PlayerController::class, 'index']);
-    Route::get($idInThePath, [PlayerController::class, 'show']);
+    Route::get('/{player}', [PlayerController::class, 'show']);
     Route::post('/', [PlayerController::class, 'store']);
-    Route::put($idInThePath, [PlayerController::class, 'update']);
-    Route::delete($idInThePath, [PlayerController::class, 'destroy']);
+    Route::put('/{player}', [PlayerController::class, 'update']);
+    Route::delete('/{player}', [PlayerController::class, 'destroy'])->middleware('bearer_token');
 });
 
 Route::post('team/process', [TeamController::class, 'process']);

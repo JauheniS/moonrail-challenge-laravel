@@ -7,94 +7,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePlayerRequest;
+use App\Http\Requests\UpdatePlayerRequest;
+use App\Http\Resources\PlayerResource;
 use App\Models\Player;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PlayerController extends Controller
 {
     public function index()
     {
-        $players = Player::all();
-        return response()->json($players);
+        return PlayerResource::collection(Player::with('skills')->get());
     }
 
-    public function show($id)
+    public function show(Player $player)
     {
-        $player = Player::find($id);
-        if (!$player) {
-            return response()->json(['message' => 'Player not found'], 404);
-        }
-        return response()->json($player);
+        return new PlayerResource($player->load('skills'));
     }
 
-    public function store(Request $request)
+    public function store(StorePlayerRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'position' => 'required|string|in:defender,midfielder,forward',
-            'playerSkills' => 'required|array|min:1',
-            'playerSkills.*.skill' => 'required|string|in:defense,attack,speed,strength,stamina',
-            'playerSkills.*.value' => 'required|integer',
-        ]);
+        $player = DB::transaction(function () use ($request) {
+            $player = Player::create($request->validated());
 
-        return DB::transaction(function () use ($validated) {
-            $player = Player::create([
-                'name' => $validated['name'],
-                'position' => $validated['position'],
-            ]);
+            $player->skills()->createMany($request->input('playerSkills'));
 
-            foreach ($validated['playerSkills'] as $skillData) {
-                $player->skills()->create([
-                    'skill' => $skillData['skill'],
-                    'value' => $skillData['value'],
-                ]);
-            }
-
-            return response()->json($player->refresh(), 201);
+            return $player;
         });
+
+        return (new PlayerResource($player->load('skills')))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePlayerRequest $request, Player $player)
     {
-        $player = Player::find($id);
-        if (!$player) {
-            return response()->json(['message' => 'Player not found'], 404);
-        }
-
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'position' => 'required|string|in:defender,midfielder,forward',
-            'playerSkills' => 'required|array|min:1',
-            'playerSkills.*.skill' => 'required|string|in:defense,attack,speed,strength,stamina',
-            'playerSkills.*.value' => 'required|integer',
-        ]);
-
-        return DB::transaction(function () use ($player, $validated) {
-            $player->update([
-                'name' => $validated['name'],
-                'position' => $validated['position'],
-            ]);
+        $player = DB::transaction(function () use ($player, $request) {
+            $player->update($request->validated());
 
             $player->skills()->delete();
-            foreach ($validated['playerSkills'] as $skillData) {
-                $player->skills()->create([
-                    'skill' => $skillData['skill'],
-                    'value' => $skillData['value'],
-                ]);
-            }
+            $player->skills()->createMany($request->input('playerSkills'));
 
-            return response()->json($player->refresh());
+            return $player;
         });
+
+        return new PlayerResource($player->load('skills'));
     }
 
-    public function destroy($id)
+    public function destroy(Player $player)
     {
-        $player = Player::find($id);
-        if (!$player) {
-            return response()->json(['message' => 'Player not found'], 404);
-        }
-
         $player->delete();
         return response()->json(['message' => 'Player deleted']);
     }
