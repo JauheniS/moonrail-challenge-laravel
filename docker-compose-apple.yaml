@@ -10,7 +10,7 @@ services:
       - .:/var/www
     ports:
       - "3000:3000"
-    command: /bin/sh -c "php-fpm -D && php artisan serve --host=0.0.0.0 --port=3000"
+    command: /bin/sh -c "php-fpm -D && php artisan serve --host=0.0.0.0"
     networks:
       - laravel-network
     depends_on:
