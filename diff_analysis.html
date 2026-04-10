@@ -253,6 +253,8 @@
 <nav>
     <h2>Navigation</h2>
     <ul>
+        <li><a href="#task">Project Task</a></li>
+        <li><a href="#changelist">Full Changelist</a></li>
         <li><a href="#overview">Architecture Overview</a></li>
         <li><a href="#engineering">Engineering Principles (SOLID/ACID)</a></li>
         <li><a href="#laravel-docs">Laravel Standards</a></li>
@@ -270,8 +272,57 @@
 <main>
     <header>
         <h1>Laravel Project Refactoring</h1>
-        <p>Evolution from Legacy Code to Modern Enterprise Standards (5d463927 → HEAD)</p>
+        <p>Evolution from Legacy Code to Modern Enterprise Standards (a642521b → d14d40c3)</p>
     </header>
+
+    <section id="task">
+        <h2>0. Project Task: Football Team Selection API</h2>
+        <div class="card">
+            <p>The core objective of this project was to build a robust, high-performance RESTful API for managing football players and selecting optimal teams based on complex skill and position requirements.</p>
+            <h3>Key Requirements:</h3>
+            <ul>
+                <li><strong>Player Management:</strong> Full CRUD operations for players and their associated skill sets.</li>
+                <li><strong>Intelligent Team Selection:</strong> An endpoint to process a list of team requirements (position, main skill, count) and return the best available players.</li>
+                <li><strong>Priority-Based Allocation:</strong> Selection must prioritize players with the requested skill, then by skill value, then by overall max skill, and finally by ID (deterministic).</li>
+                <li><strong>Constraint Satisfaction:</strong> No player can be selected more than once in a single team request.</li>
+                <li><strong>Data Integrity & Performance:</strong> Ensure transactional safety and optimize database queries to handle large player pools efficiently.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="changelist">
+        <h2>0.1 Full Changelist (What's Been Done)</h2>
+        <div class="card">
+            <h3>Architecture & Refactoring</h3>
+            <ul>
+                <li><strong>Service Layer Implementation:</strong> Extracted business logic into <code>PlayerService</code> and <code>TeamSelectionService</code> to decouple controllers from core logic.</li>
+                <li><strong>PHP 8.1+ Type Safety:</strong> Introduced <code>PlayerPosition</code> and <code>PlayerSkill</code> Enums to eliminate string-based errors.</li>
+                <li><strong>Form Request Validation:</strong> Created specialized Request classes (<code>StorePlayerRequest</code>, <code>TeamProcessRequest</code>) for robust input sanitization.</li>
+                <li><strong>API Transformation Layer:</strong> Implemented <code>PlayerResource</code> and <code>PlayerSkillResource</code> for consistent and secure JSON responses.</li>
+            </ul>
+
+            <h3>Feature Enhancements</h3>
+            <ul>
+                <li><strong>Global Score-Based Selection:</strong> Replaced the basic greedy algorithm with a global assignment strategy that finds the best possible matches across all team requirements.</li>
+                <li><strong>Optimized Batch Loading:</strong> Implemented batched <code>WHERE IN</code> queries to fetch potential candidates, resolving the O(N) query-in-loop performance issue.</li>
+                <li><strong>Transactional Integrity:</strong> Wrapped critical write operations in <code>DB::transaction</code> to ensure ACID compliance.</li>
+                <li><strong>Database Performance:</strong> Added database migrations to include indexes on <code>position</code>, <code>skill</code>, and <code>value</code> columns.</li>
+                <li><strong>Intelligent Skill Syncing:</strong> Optimized player updates to use <code>updateOrCreate</code> for skills, preserving primary key continuity.</li>
+            </ul>
+
+            <h3>DevOps & Tooling</h3>
+            <ul>
+                <li><strong>Full Dockerization:</strong> Provided a complete <code>Dockerfile</code> and <code>docker-compose.yaml</code> for seamless local development.</li>
+                <li><strong>Task Automation:</strong> Added a <code>Makefile</code> for common commands (install, test, start).</li>
+                <li><strong>AI Guidance:</strong> Integrated Cursor rules (<code>.mdc</code> files) and agent skills for persistent coding standards.</li>
+            </ul>
+
+            <h3>Quality Assurance</h3>
+            <ul>
+                <li><strong>Comprehensive Test Suite:</strong> Added over 20 new feature and unit tests, achieving high coverage for both happy paths and edge cases (e.g., insufficient players, duplicate skills).</li>
+            </ul>
+        </div>
+    </section>
 
     <section id="overview">
         <h2>1. Comprehensive Architecture Overview</h2>
